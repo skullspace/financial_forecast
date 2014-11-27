@@ -6,7 +6,7 @@ from datetime import datetime#, timedelta
 import calendar
 #import getpass
 import gnucashxml
-#import csv
+import csv
 
 def main():
     filename = sys.argv[1]
@@ -21,6 +21,7 @@ def main():
         print(month)
         assets = get_assets_on_date(book, month)
         liabilities = get_liability_on_date(book, month)
+        capital = assets + liabilities
         dues = get_dues_for_month(book, month)
         donations = get_donations_for_month(book, month)
         members = get_paying_members(book, month)
@@ -28,7 +29,7 @@ def main():
 
         print("Total assets: ", assets)
         print("Total liability: ", liabilities)
-        print("Available capital: ", assets + liabilities)
+        print("Available capital: ", capital)
         print("Dues collected last month: ", dues)
         print("Dues paying members: ", members)
         print("Regular donations collected last month: ", donations)
@@ -36,8 +37,10 @@ def main():
         print("Total expected income: ", (dues + donations))
 
         history.append({
+            'month': month,
             'assets': assets,
             'liabilities': liabilities,
+            'capital': capital,
             'dues': dues,
             'donations': donations,
             'members': members,
@@ -45,6 +48,15 @@ def main():
         })
 
         print()
+
+    with open('foobar.csv', 'wb') as csvfile:
+        fieldnames = ['month', 'assets', 'liabilities', 'capital', 'dues', 'donations', 'members', 'donating_members']
+        writer = csv.DictWriter(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for history_item in history:
+            writer.writerow(history_item)
+
 
 
 def get_assets_on_date(book, date):
