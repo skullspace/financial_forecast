@@ -2,88 +2,133 @@
 
 from __future__ import print_function
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime#, timedelta
+import calendar
 #import getpass
 import gnucashxml
-import csv
+#import csv
 
 def main():
     filename = sys.argv[1]
     book = gnucashxml.from_filename(filename)
 
-#    username = raw_input("Username: ")
-#    password = getpass.getpass()
-#
-#    print(username, ":", password)
-#
-#
-#
-#    import gdata.docs.service
-#
-#    # Create a client class which will make HTTP requests with Google Docs server.
-#    client = gdata.docs.service.DocsService()
-#    # Authenticate using your Google Docs email address and password.
-#    client.ClientLogin('admin@lists.skullspace.ca', '2014Directors')
-#
-#    # Query the server for an Atom feed containing a list of your documents.
-#    documents_feed = client.GetDocumentListFeed()
-#    # Loop through the feed and extract each document entry.
-#    for document_entry in documents_feed.entry:
-#        # Display the title of the document on the command line.
-#        print(document_entry.title.text)
-#
-#    return
-#
-#
-#
-#
-#
+    start = datetime(2014, 4, 22)
+    end = datetime(2014, 11, 25)
 
+    history = []
+
+    for month in monthrange(start, end):
+        print(month)
+        assets = get_assets_on_date(book, month)
+        liabilities = get_liability_on_date(book, month)
+        dues = get_dues_for_month(book, month)
+        donations = get_donations_for_month(book, month)
+        members = get_paying_members(book, month)
+        donating_members = get_donating_members(book, month)
+
+        print("Total assets: ", assets)
+        print("Total liability: ", liabilities)
+        print("Available capital: ", assets + liabilities)
+        print("Dues collected last month: ", dues)
+        print("Dues paying members: ", members)
+        print("Regular donations collected last month: ", donations)
+        print("Regularly donating members: ", donating_members)
+        print("Total expected income: ", (dues + donations))
+
+        history.append({
+            'assets': assets,
+            'liabilities': liabilities,
+            'dues': dues,
+            'donations': donations,
+            'members': members,
+            'donating_members': donating_members,
+        })
+
+        print()
+
+
+def get_assets_on_date(book, date):
     assets = book.find_account("Current Assets")
 
     asset_total = 0
     for account in assets.children:
         if account.name != "Prepaid Rent":
-            asset_total += sum(split.value for split in account.splits)
+            asset_total += sum(split.value for split in account.splits if split.transaction.date.replace(tzinfo=None) <= date)
 
+    return asset_total
+
+
+def get_liability_on_date(book, date):
     liabilities = book.find_account("Active Members")
 
-    liability_total = sum(split.value for split in liabilities.get_all_splits())
+    liability_total = sum(split.value for split in liabilities.get_all_splits() if split.transaction.date.replace(tzinfo=None) <= date)
 
-    today = datetime.now()
-    first_of_month = datetime(today.year, today.month, 1)
+    return liability_total
+
+
+def get_dues_for_month(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
 
     member_dues = book.find_account("Member Dues")
     dues = 0
+    for split in member_dues.get_all_splits():
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+            dues += split.value
+
+    return dues * -1
+
+
+def get_paying_members(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    member_dues = book.find_account("Member Dues")
     members = 0
     for split in member_dues.get_all_splits():
-        if split.transaction.date.replace(tzinfo=None) >= first_of_month:
-            dues += split.value
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
             members += len(split.transaction.splits) - 1
+
+    return members
+
+
+def get_donations_for_month(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
 
     member_donations = book.find_account("Regular donations")
     donations = 0
-    donating_members = 0
     for split in member_donations.get_all_splits():
-        if split.transaction.date.replace(tzinfo=None) >= first_of_month:
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
             donations += split.value
-            donating_members += len(split.transaction.splits) - 1
 
-    print("Total assets: ", asset_total)
-    print("Total liability: ", liability_total)
-    print("Available capital: ", asset_total + liability_total)
-    dues *= -1
-    print("Dues collected last month: ", dues)
-    print("Dues paying members: ", members)
-    donations *= -1
-    print("Regular donations collected last month: ", donations)
-    print("Regularly donating members: ", donating_members)
-    print("Total expected income: ", (dues + donations))
+    return donations * -1
 
-    with open('foobar.csv', 'wb') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Total assets', 'Total liability', 'Available capital', 'Dues collected last month', 'Dues paying members', 'Regular donations collected last month', 'Regularly donating members', 'Total expected income'])
-        writer.writerow([asset_total, liability_total, asset_total + liability_total, dues, members, donations, donating_members, dues + donations])
+
+def get_donating_members(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    member_dues = book.find_account("Regular donations")
+    members = 0
+    for split in member_dues.get_all_splits():
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+            members += len(split.transaction.splits) - 1
+
+    return members
+
+
+def subtract_month(date):
+    month = date.month - 2
+    month = month % 12 + 1
+    year = date.year - 1/12
+    day = min(date.day, calendar.monthrange(year, month)[1])
+    return datetime(year, month, day)
+
+
+def monthrange(start_date, end_date):
+    for month in range(start_date.month, end_date.month):
+        yield datetime(2014, month + 1, 4)
 
 if __name__ == "__main__":
     main()
