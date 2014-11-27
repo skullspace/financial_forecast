@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timedelta
 #import getpass
 import gnucashxml
+import csv
 
 def main():
     filename = sys.argv[1]
@@ -49,13 +50,14 @@ def main():
 
     liability_total = sum(split.value for split in liabilities.get_all_splits())
 
-    first_of_month = datetime.now() - timedelta(days=datetime.now().day + 1)
+    today = datetime.now()
+    first_of_month = datetime(today.year, today.month, 1)
 
     member_dues = book.find_account("Member Dues")
     dues = 0
     members = 0
     for split in member_dues.get_all_splits():
-        if split.transaction.date.replace(tzinfo=None) > first_of_month:
+        if split.transaction.date.replace(tzinfo=None) >= first_of_month:
             dues += split.value
             members += len(split.transaction.splits) - 1
 
@@ -63,7 +65,7 @@ def main():
     donations = 0
     donating_members = 0
     for split in member_donations.get_all_splits():
-        if split.transaction.date.replace(tzinfo=None) > first_of_month:
+        if split.transaction.date.replace(tzinfo=None) >= first_of_month:
             donations += split.value
             donating_members += len(split.transaction.splits) - 1
 
@@ -77,6 +79,11 @@ def main():
     print("Regular donations collected last month: ", donations)
     print("Regularly donating members: ", donating_members)
     print("Total expected income: ", (dues + donations))
+
+    with open('foobar.csv', 'wb') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['Total assets', 'Total liability', 'Available capital', 'Dues collected last month', 'Dues paying members', 'Regular donations collected last month', 'Regularly donating members', 'Total expected income'])
+        writer.writerow([asset_total, liability_total, asset_total + liability_total, dues, members, donations, donating_members, dues + donations])
 
 if __name__ == "__main__":
     main()
