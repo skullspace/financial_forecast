@@ -2,7 +2,8 @@
 
 from __future__ import print_function
 import sys
-from datetime import datetime#, timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import calendar
 #import getpass
 import gnucashxml
@@ -17,7 +18,7 @@ def main():
 
     history = []
 
-    for month in monthrange(start, end):
+    for month in report_days(start, end):
         print(month)
         assets = get_assets_on_date(book, month)
         liabilities = get_liability_on_date(book, month)
@@ -56,7 +57,6 @@ def main():
         writer.writeheader()
         for history_item in history:
             writer.writerow(history_item)
-
 
 
 def get_assets_on_date(book, date):
@@ -138,9 +138,12 @@ def subtract_month(date):
     return datetime(year, month, day)
 
 
-def monthrange(start_date, end_date):
-    for month in range(start_date.month, end_date.month):
-        yield datetime(2014, month + 1, 4)
+def report_days(start_date, end_date):
+    delta = relativedelta(months=+1)
+    d = start_date.replace(day=4)
+    while d < end_date.replace(day=4):
+        d += delta
+        yield d
 
 if __name__ == "__main__":
     main()
