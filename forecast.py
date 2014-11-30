@@ -78,6 +78,8 @@ def main():
 
     income = get_projected_income(history)
     expenses = get_projected_expenses(history)
+    print("Projected income: ", income)
+    print("Projected expenses: ", expenses)
 
     history[-1][PROJECTED_CAPITAL] = history[-1][CAPITAL]
     history[-1][PROJECTED_DUES] = history[-1][DUES]
@@ -190,8 +192,20 @@ def get_expenses_for_month(book, month_end):
     expense_accounts = book.find_account("Expenses")
     expenses = 0
     for account in expense_accounts.children:
-        if account.name != "Anti-social 10-04":
-            expenses += sum(split.value for split in account.splits if start_date < split.transaction.date.replace(tzinfo=None) <= end_date)
+        if account.name != "Anti-social 10-04" and account.name != "Groceries":
+            #print(account.name)
+            for split in account.splits:
+                if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+                    expenses += split.value
+                    #print("\t", split.transaction.description, " \t", split.value)
+
+            for subaccount in account.children:
+                #print("\t", subaccount.name)
+                for split in subaccount.splits:
+                    if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+                        expenses += split.value
+                        #print("\t\t", split.transaction.description, " \t", split.value)
+
 
     return expenses * -1
 
