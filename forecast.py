@@ -20,11 +20,14 @@ FOOD_DONATIONS =  'Food donations'
 MEMBERS = 'Members'
 DONATING_MEMBERS = 'Donating members'
 EXPENSES = 'Expenses'
+FOOD_EXPENSES = 'Food expenses'
 PROJECTED_CAPITAL = 'Projected capital'
 PROJECTED_DUES = 'Projected dues'
 PROJECTED_DONATIONS = 'Projected donations'
 PROJECTED_MEMBERS = 'Projected members'
 PROJECTED_DONATING_MEMBERS = 'Projected donating members'
+PROJECTED_FOOD_DONATIONS = 'Projected food donations'
+PROJECTED_FOOD_EXPENSES = 'Projected food expenses'
 
 
 def main():
@@ -49,6 +52,7 @@ def main():
         members = get_paying_members(book, month)
         donating_members = get_donating_members(book, month)
         expenses = get_expenses_for_month(book, month)
+        food_expenses = get_food_expenses_for_month(book, month)
 
         print("Total assets: ", assets)
         print("Total liability: ", liabilities)
@@ -60,6 +64,7 @@ def main():
         print("Food donations: ", food_donations)
         print("Total expected income: ", (dues + donations + food_donations))
         print("Expenses: ", expenses)
+        print("Food expenses: ", food_expenses)
 
         history.append({
             DATE: month,
@@ -72,6 +77,7 @@ def main():
             MEMBERS: members,
             DONATING_MEMBERS: donating_members,
             EXPENSES: expenses,
+            FOOD_EXPENSES: food_expenses,
         })
 
         print()
@@ -81,11 +87,16 @@ def main():
     print("Projected income: ", income)
     print("Projected expenses: ", expenses)
 
+    food_income = get_projected_food_income(history)
+    food_expenses = get_projected_food_expenses(history)
+
     history[-1][PROJECTED_CAPITAL] = history[-1][CAPITAL]
     history[-1][PROJECTED_DUES] = history[-1][DUES]
     history[-1][PROJECTED_DONATIONS] = history[-1][DONATIONS]
     history[-1][PROJECTED_MEMBERS] = history[-1][MEMBERS]
     history[-1][PROJECTED_DONATING_MEMBERS] = history[-1][DONATING_MEMBERS]
+    #history[-1][PROJECTED_FOOD_DONATIONS] = history[-1][FOOD_DONATIONS]
+    #history[-1][PROJECTED_FOOD_EXPENSES] = history[-1][FOOD_EXPENSES]
 
     for month in report_days(today, end):
         print(month)
@@ -97,6 +108,8 @@ def main():
             PROJECTED_DONATIONS: history[-1][PROJECTED_DONATIONS],
             PROJECTED_MEMBERS: history[-1][PROJECTED_MEMBERS],
             PROJECTED_DONATING_MEMBERS: history[-1][PROJECTED_DONATING_MEMBERS],
+            PROJECTED_FOOD_DONATIONS: food_income,
+            PROJECTED_FOOD_EXPENSES: food_expenses,
         })
 
     with open('foobar.csv', 'wb') as csvfile:
@@ -105,17 +118,20 @@ def main():
             ASSETS,
             LIABILITIES,
             CAPITAL,
-            DUES,
-            DONATIONS,
-            FOOD_DONATIONS,
-            MEMBERS,
-            DONATING_MEMBERS,
-            EXPENSES,
             PROJECTED_CAPITAL,
+            DUES,
             PROJECTED_DUES,
+            DONATIONS,
             PROJECTED_DONATIONS,
+            MEMBERS,
             PROJECTED_MEMBERS,
+            DONATING_MEMBERS,
             PROJECTED_DONATING_MEMBERS,
+            EXPENSES,
+            FOOD_DONATIONS,
+            PROJECTED_FOOD_DONATIONS,
+            FOOD_EXPENSES,
+            PROJECTED_FOOD_EXPENSES,
         ]
 
 
@@ -212,6 +228,20 @@ def get_expenses_for_month(book, month_end):
     return expenses * -1
 
 
+def get_food_expenses_for_month(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    expense_accounts = book.find_account("Groceries")
+    expenses = 0
+    for split in expense_accounts.get_all_splits():
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+            expenses += split.value
+            #print("\t", split.transaction.description, " \t", split.value)
+
+    return expenses * -1
+
+
 def get_food_donations_for_month(book, month_end):
     end_date = month_end
     start_date = subtract_month(month_end)
@@ -259,11 +289,27 @@ def get_projected_income(history):
 
 
 def get_projected_expenses(history):
+    expenses = 0
+    for data_point in history:
+        expenses += data_point[EXPENSES]
+
+    return expenses / len(history)
+
+
+def get_projected_food_income(history):
     income = 0
     for data_point in history:
-        income += data_point[EXPENSES]
+        income += data_point[FOOD_DONATIONS]
 
     return income / len(history)
+
+
+def get_projected_food_expenses(history):
+    expenses = 0
+    for data_point in history:
+        expenses += data_point[FOOD_EXPENSES]
+
+    return expenses / len(history)
 
 
 if __name__ == "__main__":
