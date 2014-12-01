@@ -28,6 +28,9 @@ PROJECTED_MEMBERS = 'Projected members'
 PROJECTED_DONATING_MEMBERS = 'Projected donating members'
 PROJECTED_FOOD_DONATIONS = 'Projected food donations'
 PROJECTED_FOOD_EXPENSES = 'Projected food expenses'
+CAPITAL_TARGET = 'Target balance (3 month buffer)'
+
+MONTH_START_DAY = 4
 
 
 def main():
@@ -35,6 +38,8 @@ def main():
     book = gnucashxml.from_filename(filename)
 
     today = datetime.now().replace(second=0, microsecond=0)
+    if today.day < MONTH_START_DAY:
+        today -= relativedelta(months=+1)
     delta = relativedelta(months=+6)
     start = today - delta
     end = today + delta
@@ -78,6 +83,7 @@ def main():
             DONATING_MEMBERS: donating_members,
             EXPENSES: expenses,
             FOOD_EXPENSES: food_expenses,
+            CAPITAL_TARGET: expenses * -3,
         })
 
         print()
@@ -98,8 +104,13 @@ def main():
     #history[-1][PROJECTED_FOOD_DONATIONS] = history[-1][FOOD_DONATIONS]
     #history[-1][PROJECTED_FOOD_EXPENSES] = history[-1][FOOD_EXPENSES]
 
+
     for month in report_days(today, end):
         print(month)
+
+        rent_increase = 0
+        if month >= datetime(2015, 02, 01):
+            rent_increase = -100
 
         history.append({
             DATE: month,
@@ -110,6 +121,7 @@ def main():
             PROJECTED_DONATING_MEMBERS: history[-1][PROJECTED_DONATING_MEMBERS],
             PROJECTED_FOOD_DONATIONS: food_income,
             PROJECTED_FOOD_EXPENSES: food_expenses,
+            CAPITAL_TARGET: (expenses + rent_increase) * -3,
         })
 
     with open('foobar.csv', 'wb') as csvfile:
@@ -132,6 +144,7 @@ def main():
             PROJECTED_FOOD_DONATIONS,
             FOOD_EXPENSES,
             PROJECTED_FOOD_EXPENSES,
+            CAPITAL_TARGET,
         ]
 
 
@@ -278,8 +291,8 @@ def subtract_month(date):
 
 def report_days(start_date, end_date):
     delta = relativedelta(months=+1)
-    d = start_date.replace(day=4)
-    while d < end_date.replace(day=4):
+    d = start_date.replace(day=MONTH_START_DAY)
+    while d < end_date.replace(day=MONTH_START_DAY):
         d += delta
         yield d
 
