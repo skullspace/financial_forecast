@@ -29,6 +29,8 @@ PROJECTED_DONATING_MEMBERS = 'Projected donating members'
 PROJECTED_FOOD_DONATIONS = 'Projected food donations'
 PROJECTED_FOOD_EXPENSES = 'Projected food expenses'
 CAPITAL_TARGET = 'Target balance (3 month buffer)'
+FOOD_PROFIT = 'Food profit'
+PROJECTED_FOOD_PROFIT = 'Projected food profit'
 
 MONTH_START_DAY = 4
 
@@ -84,6 +86,7 @@ def main():
             EXPENSES: expenses,
             FOOD_EXPENSES: food_expenses,
             CAPITAL_TARGET: expenses * -3,
+            FOOD_PROFIT: food_donations + food_expenses,
         })
 
         print()
@@ -122,6 +125,7 @@ def main():
             PROJECTED_FOOD_DONATIONS: food_income,
             PROJECTED_FOOD_EXPENSES: food_expenses,
             CAPITAL_TARGET: (expenses + rent_increase) * -3,
+            FOOD_PROFIT: food_income + food_expenses,
         })
 
     with open('foobar.csv', 'wb') as csvfile:
@@ -145,6 +149,7 @@ def main():
             PROJECTED_FOOD_EXPENSES,
             FOOD_EXPENSES,
             CAPITAL_TARGET,
+            FOOD_PROFIT,
         ]
 
 
