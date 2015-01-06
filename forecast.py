@@ -92,9 +92,10 @@ def main():
         print()
 
     income = get_projected_income(history)
-    expenses = get_projected_expenses(history)
+    expenses = get_projected_expenses(history) - get_historical_rent_expenses_average(book, start, today)
+
     print("Projected income: ", income)
-    print("Projected expenses: ", expenses)
+    print("Projected expenses: ", expenses, " (plus monthly rent amount)")
 
     food_income = get_projected_food_income(history)
     food_expenses = get_projected_food_expenses(history)
@@ -107,24 +108,19 @@ def main():
     #history[-1][PROJECTED_FOOD_DONATIONS] = history[-1][FOOD_DONATIONS]
     #history[-1][PROJECTED_FOOD_EXPENSES] = history[-1][FOOD_EXPENSES]
 
-
     for month in report_days(today, end):
         print(month)
 
-        rent_increase = 0
-        if month >= datetime(2015, 02, 01):
-            rent_increase = -100
-
         history.append({
             DATE: month,
-            PROJECTED_CAPITAL: history[-1][PROJECTED_CAPITAL] + income + expenses,
+            PROJECTED_CAPITAL: history[-1][PROJECTED_CAPITAL] + income + expenses + get_rent_expenses_for_month(book, month),
             PROJECTED_DUES: history[-1][PROJECTED_DUES],
             PROJECTED_DONATIONS: history[-1][PROJECTED_DONATIONS],
             PROJECTED_MEMBERS: history[-1][PROJECTED_MEMBERS],
             PROJECTED_DONATING_MEMBERS: history[-1][PROJECTED_DONATING_MEMBERS],
             PROJECTED_FOOD_DONATIONS: food_income,
             PROJECTED_FOOD_EXPENSES: food_expenses,
-            CAPITAL_TARGET: (expenses + rent_increase) * -3,
+            CAPITAL_TARGET: (expenses + get_rent_expenses_for_month(book, month)) * -3,
             FOOD_PROFIT: food_income + food_expenses,
         })
 
@@ -228,7 +224,7 @@ def get_expenses_for_month(book, month_end):
     expense_accounts = book.find_account("Expenses")
     expenses = 0
     for account in expense_accounts.children:
-        if account.name != "Anti-social 10-04" and account.name != "Groceries":
+        if account.name != "Anti-social 10-04" and account.name != "Hacker Jeopardy Ron's Revenge" and account.name != "Groceries":
             #print(account.name)
             for split in account.splits:
                 if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
@@ -244,6 +240,31 @@ def get_expenses_for_month(book, month_end):
 
 
     return expenses * -1
+
+
+def get_rent_expenses_for_month(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    expense_accounts = book.find_account("Expenses")
+    expenses = 0
+    for account in expense_accounts.children:
+        if account.name == "Rent":
+            for split in account.splits:
+                if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+                    expenses += split.value
+
+    return expenses * -1
+
+
+def get_historical_rent_expenses_average(book, start, today):
+    rent = 0
+    months = 0
+    for month in report_days(start, today):
+        rent += get_rent_expenses_for_month(book, month)
+        months += 1
+
+    return rent / months
 
 
 def get_food_expenses_for_month(book, month_end):
