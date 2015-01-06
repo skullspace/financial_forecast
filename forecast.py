@@ -289,7 +289,9 @@ def get_donating_members(book, month_end):
 def subtract_month(date):
     month = date.month - 2
     month = month % 12 + 1
-    year = date.year - 1/12
+    year = date.year
+    if month > date.month:
+        year = date.year - 1
     day = min(date.day, calendar.monthrange(year, month)[1])
     return datetime(year, month, day)
 
