@@ -41,7 +41,7 @@ def main():
     filename = sys.argv[1]
     book = gnucashxml.from_filename(filename)
 
-    today = datetime.now().replace(second=0, microsecond=0)
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     if today.day < MONTH_START_DAY:
         today -= relativedelta(months=+1)
     delta = relativedelta(months=+6)
