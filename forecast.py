@@ -227,19 +227,9 @@ def get_expenses_for_month(book, month_end):
     expenses = 0
     for account in expense_accounts.children:
         if account.name not in EXEMPT_EXPENSE_ACCOUNTS:
-            #print(account.name)
-            for split in account.splits:
+            for split in account.get_all_splits():
                 if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
                     expenses += split.value
-                    #print("\t", split.transaction.description, " \t", split.value)
-
-            for subaccount in account.children:
-                #print("\t", subaccount.name)
-                for split in subaccount.splits:
-                    if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
-                        expenses += split.value
-                        #print("\t\t", split.transaction.description, " \t", split.value)
-
 
     return expenses * -1
 
