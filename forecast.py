@@ -5,7 +5,6 @@ import sys
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import calendar
-#import getpass
 import gnucashxml
 import csv
 
@@ -107,8 +106,6 @@ def main():
     history[-1][PROJECTED_DONATIONS] = history[-1][DONATIONS]
     history[-1][PROJECTED_MEMBERS] = history[-1][MEMBERS]
     history[-1][PROJECTED_DONATING_MEMBERS] = history[-1][DONATING_MEMBERS]
-    #history[-1][PROJECTED_FOOD_DONATIONS] = history[-1][FOOD_DONATIONS]
-    #history[-1][PROJECTED_FOOD_EXPENSES] = history[-1][FOOD_EXPENSES]
 
     for month in report_days(today, end):
         print(month)
@@ -268,7 +265,6 @@ def get_food_expenses_for_month(book, month_end):
     for split in expense_accounts.get_all_splits():
         if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
             expenses += split.value
-            #print("\t", split.transaction.description, " \t", split.value)
 
     return expenses * -1
 
