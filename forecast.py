@@ -34,6 +34,8 @@ PROJECTED_FOOD_PROFIT = 'Projected food profit'
 
 MONTH_START_DAY = 4
 
+EXEMPT_EXPENSE_ACCOUNTS = ["Anti-social 10-04", "Hacker Jeopardy Ron's Revenge", "Groceries"]
+
 
 def main():
     filename = sys.argv[1]
@@ -224,7 +226,7 @@ def get_expenses_for_month(book, month_end):
     expense_accounts = book.find_account("Expenses")
     expenses = 0
     for account in expense_accounts.children:
-        if account.name != "Anti-social 10-04" and account.name != "Hacker Jeopardy Ron's Revenge" and account.name != "Groceries":
+        if account.name not in EXEMPT_EXPENSE_ACCOUNTS:
             #print(account.name)
             for split in account.splits:
                 if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
