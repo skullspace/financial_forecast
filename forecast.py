@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 import calendar
 import gnucashxml
 import csv
+import getopt
 
 
 DATE = 'Date'
@@ -32,20 +33,42 @@ FOOD_PROFIT = 'Food profit'
 PROJECTED_FOOD_PROFIT = 'Projected food profit'
 
 MONTH_START_DAY = 5
+DEFAULT_MONTHS = 6
 
 EXEMPT_EXPENSE_ACCOUNTS = ["Anti-social 10-04", "Hacker Jeopardy Ron's Revenge", "Groceries"]
 
 
-def main():
-    filename = sys.argv[1]
+def main(argv):
+    try:
+        opts, args = getopt.getopt(argv, "a:b:c:")
+    except getopt.GetoptError:
+        print("argument error")
+        sys.exit(2)
+
+    months_after = months_before = months_context = None
+
+    for opt, arg in opts:
+        if opt == '-a':
+            months_after = int(arg)
+        elif opt == '-b':
+            months_before = int(arg)
+        elif opt == '-c':
+            months_context = int(arg)
+
+    future = months_after if months_after else months_context if months_context else DEFAULT_MONTHS
+    past = months_before if months_before else months_context if months_context else DEFAULT_MONTHS
+
+
+    filename = args[0]
     book = gnucashxml.from_filename(filename)
 
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     if today.day < MONTH_START_DAY:
         today -= relativedelta(months=+1)
-    delta = relativedelta(months=+6)
-    start = today - delta
-    end = today + delta
+    future_delta = relativedelta(months=+future)
+    past_delta = relativedelta(months=+past)
+    start = today - past_delta
+    end = today + future_delta
 
     history = []
 
@@ -191,6 +214,10 @@ def get_dues_for_month(book, month_end):
 
 
 def get_paying_members(book, month_end):
+    # This is the first month of the 2014 books, but the membership dues were recorded in the 2013 books
+    if month_end == datetime(2014, 3, MONTH_START_DAY):
+        return 60
+
     end_date = month_end
     start_date = subtract_month(month_end)
 
@@ -342,4 +369,4 @@ def get_projected_food_expenses(history):
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
