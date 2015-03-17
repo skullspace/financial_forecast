@@ -32,7 +32,7 @@ CAPITAL_TARGET = 'Target balance (3 month buffer)'
 FOOD_PROFIT = 'Food profit'
 PROJECTED_FOOD_PROFIT = 'Projected food profit'
 
-MONTH_START_DAY = 5
+MONTH_START_DAY = 6
 DEFAULT_MONTHS = 6
 
 EXEMPT_EXPENSE_ACCOUNTS = ["Anti-social 10-04", "Hacker Jeopardy Ron's Revenge", "Groceries"]
