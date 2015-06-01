@@ -66,6 +66,7 @@ def main(argv):
                 msg['To'] = member.email()
                 msg['CC'] = 'admin@skullspace.ca'
                 msg.set_payload('Hello ' + member.name() + ',\n\nAccording to our records, your account balance is currently $' + str(member.effective_balance()) + '. Dues for the month of ' + calendar.month_name[now.month % 12 + 1] + ' were due on ' + calendar.month_name[now.month] + ' 15th. If you believe there is an issue with this record, please let us know.\n\nThank you,\n\n- Your SkullSpace Board of Directors')
+                # extra_late_warning = "Note that since you are more than 3 months behind, you are at risk of loosing your membership. Please contact us to make arrangements as soon as possible."
 
                 gmail.append("[Gmail]/Drafts",
                             '',
