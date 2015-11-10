@@ -18,6 +18,8 @@ DUES = 'Dues'
 DONATIONS = 'Donations'
 FOOD_DONATIONS =  'Food donations'
 MEMBERS = 'Members'
+NEW_MEMBERS = 'New members'
+LOST_MEMBERS = 'Lost members'
 DONATING_MEMBERS = 'Donating members'
 EXPENSES = 'Expenses'
 FOOD_EXPENSES = 'Food expenses'
@@ -81,6 +83,8 @@ def main(argv):
         donations = get_donations_for_month(book, month)
         food_donations = get_food_donations_for_month(book, month)
         members = get_paying_members(book, month)
+        new_members = get_new_members(book, month)
+        lost_members = get_lost_members(book, month)
         donating_members = get_donating_members(book, month)
         expenses = get_expenses_for_month(book, month)
         food_expenses = get_food_expenses_for_month(book, month)
@@ -90,6 +94,8 @@ def main(argv):
         print("Available capital: ", capital)
         print("Dues collected last month: ", dues)
         print("Dues paying members: ", members)
+        print("Members gained: ", new_members)
+        print("Members lost: ", lost_members)
         print("Regular donations collected last month: ", donations)
         print("Regularly donating members: ", donating_members)
         print("Food donations: ", food_donations)
@@ -107,10 +113,12 @@ def main(argv):
             FOOD_DONATIONS: food_donations,
             MEMBERS: members,
             DONATING_MEMBERS: donating_members,
-            EXPENSES: expenses,
+            EXPENSES: expenses * -1,
             FOOD_EXPENSES: food_expenses,
             CAPITAL_TARGET: expenses * -3,
             FOOD_PROFIT: food_donations + food_expenses,
+            NEW_MEMBERS: new_members,
+            LOST_MEMBERS: lost_members,
         })
 
         print()
@@ -168,6 +176,8 @@ def main(argv):
             FOOD_EXPENSES,
             CAPITAL_TARGET,
             FOOD_PROFIT,
+            NEW_MEMBERS,
+            LOST_MEMBERS,
         ]
 
 
@@ -228,6 +238,41 @@ def get_paying_members(book, month_end):
             members += len(split.transaction.splits) - 1
 
     return members
+
+
+def get_member_list(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    member_dues = book.find_account("Member Dues")
+    members = []
+    for split in member_dues.get_all_splits():
+        if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+            for subsplit in split.transaction.splits:
+                if subsplit.account.name != "Member Dues":
+                    members.append(subsplit.account.name)
+
+    return members
+
+
+def get_new_members(book, month_end):
+    current_members = get_member_list(book, month_end)
+    last_months_members = get_member_list(book, subtract_month(month_end))
+
+    new_members = set(current_members).difference(set(last_months_members))
+    print("new_members:", new_members)
+
+    return len(new_members)
+
+
+def get_lost_members(book, month_end):
+    current_members = get_member_list(book, month_end)
+    last_months_members = get_member_list(book, subtract_month(month_end))
+
+    lost_members = set(last_months_members).difference(set(current_members))
+    print("lost_members:", lost_members)
+
+    return len(lost_members)
 
 
 def get_donations_for_month(book, month_end):
@@ -332,6 +377,16 @@ def subtract_month(date):
     return datetime(year, month, day)
 
 
+def add_month(date):
+    month = date.month
+    month = month % 12 + 1
+    year = date.year
+    if month < date.month:
+        year = date.year + 1
+    day = min(date.day, calendar.monthrange(year, month)[1])
+    return datetime(year, month, day)
+
+
 def report_days(start_date, end_date):
     delta = relativedelta(months=+1)
     d = start_date.replace(day=MONTH_START_DAY)
@@ -349,7 +404,7 @@ def get_projected_expenses(history):
     for data_point in history:
         expenses += data_point[EXPENSES]
 
-    return expenses / len(history)
+    return expenses / len(history) * -1
 
 
 def get_projected_food_income(history):
