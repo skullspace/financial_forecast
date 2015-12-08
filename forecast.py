@@ -207,6 +207,12 @@ def get_liability_on_date(book, date):
     liabilities = book.find_account("Former Members")
     liability_total += sum(split.value for split in liabilities.get_all_splits() if split.transaction.date.replace(tzinfo=None) <= date)
 
+    liabilities = book.find_account("Landlord")
+    liability_total += sum(split.value for split in liabilities.get_all_splits() if split.transaction.date.replace(tzinfo=None) <= date)
+
+    liabilities = book.find_account("Unknown")
+    liability_total += sum(split.value for split in liabilities.get_all_splits() if split.transaction.date.replace(tzinfo=None) <= date)
+
     return liability_total
 
 
