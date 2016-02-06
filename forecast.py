@@ -22,6 +22,7 @@ NEW_MEMBERS = 'New members'
 LOST_MEMBERS = 'Lost members'
 DONATING_MEMBERS = 'Donating members'
 EXPENSES = 'Expenses'
+INCOME = 'Income'
 FOOD_EXPENSES = 'Food expenses'
 PROJECTED_CAPITAL = 'Projected capital'
 PROJECTED_DUES = 'Projected dues'
@@ -87,6 +88,7 @@ def main(argv):
         lost_members = get_lost_members(book, month)
         donating_members = get_donating_members(book, month)
         expenses = get_expenses_for_month(book, month)
+        income = get_income_for_month(book, month)
         food_expenses = get_food_expenses_for_month(book, month)
 
         print("Total assets: ", assets)
@@ -101,6 +103,7 @@ def main(argv):
         print("Food donations: ", food_donations)
         print("Total expected income: ", (dues + donations + food_donations))
         print("Expenses: ", expenses)
+        print("Income: ", income)
         print("Food expenses: ", food_expenses)
 
         history.append({
@@ -119,6 +122,7 @@ def main(argv):
             FOOD_PROFIT: food_donations + food_expenses,
             NEW_MEMBERS: new_members,
             LOST_MEMBERS: lost_members,
+            INCOME: income
         })
 
         print()
@@ -178,6 +182,7 @@ def main(argv):
             FOOD_PROFIT,
             NEW_MEMBERS,
             LOST_MEMBERS,
+            INCOME,
         ]
 
 
@@ -299,6 +304,21 @@ def get_expenses_for_month(book, month_end):
     start_date = subtract_month(month_end)
 
     expense_accounts = book.find_account("Expenses")
+    expenses = 0
+    for account in expense_accounts.children:
+        if account.name not in EXEMPT_EXPENSE_ACCOUNTS:
+            for split in account.get_all_splits():
+                if start_date < split.transaction.date.replace(tzinfo=None) <= end_date:
+                    expenses += split.value
+
+    return expenses * -1
+
+
+def get_income_for_month(book, month_end):
+    end_date = month_end
+    start_date = subtract_month(month_end)
+
+    expense_accounts = book.find_account("Income")
     expenses = 0
     for account in expense_accounts.children:
         if account.name not in EXEMPT_EXPENSE_ACCOUNTS:
