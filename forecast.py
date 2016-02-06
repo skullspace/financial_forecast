@@ -128,6 +128,7 @@ def main(argv):
         print()
 
     income = get_projected_income(history)
+    income = get_historical_membership_income_average(book, start, today)
     expenses = get_projected_expenses(history) - get_historical_rent_expenses_average(book, start, today)
 
     print("Projected income: ", income)
@@ -419,6 +420,16 @@ def report_days(start_date, end_date):
     while d < end_date.replace(day=MONTH_START_DAY):
         d += delta
         yield d
+
+
+def get_historical_membership_income_average(book, start, today):
+    income = 0
+    months = 0
+    for month in report_days(start, today):
+        income += get_dues_for_month(book, month) + get_donations_for_month(book, month)
+        months += 1
+
+    return income / months
 
 
 def get_projected_income(history):
