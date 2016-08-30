@@ -66,7 +66,7 @@ def main(argv):
     book = gnucashxml.from_filename(filename)
 
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    if today.day < MONTH_START_DAY:
+    if today.day + 5 < MONTH_START_DAY:
         today -= relativedelta(months=+1)
     future_delta = relativedelta(months=+future)
     past_delta = relativedelta(months=+past)
@@ -159,7 +159,7 @@ def main(argv):
             FOOD_PROFIT: food_income + food_expenses,
         })
 
-    with open('foobar.csv', 'wb') as csvfile:
+    with open('forecast.csv', 'wb') as csvfile:
         fieldnames = [
             DATE,
             ASSETS,
